@@ -220,6 +220,8 @@ class Followtests(TestCase):
     def test_unfollow_authorized_user(self):
         """Тестирование отписки от автора"""
         self.authorized_client.get(reverse(
+            'posts:profile_follow', kwargs={'username': self.post.author}))
+        self.authorized_client.get(reverse(
             'posts:profile_unfollow', kwargs={'username': self.post.author}))
         author_following = Follow.objects.filter(
             user=self.user, author=self.post.author

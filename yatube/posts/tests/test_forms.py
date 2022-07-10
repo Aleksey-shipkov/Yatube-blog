@@ -133,12 +133,15 @@ class CommentTests(TestCase):
             text='Тестовая пост1',
             group=self.group,
         )
+        comment_number_1 = Comment.objects.filter(post=post).count()
         form = {'text': 'Тестовый комментарий'}
         response = self.authorized_client.post(
             reverse('posts:add_comment', kwargs={'post_id': post.id}),
             data=form,
             follow=True
         )
+        comment_number_2 = Comment.objects.filter(post=post).count()
+        self.assertEqual(comment_number_2, comment_number_1 + 1)
         self.assertRedirects(response, reverse(
             'posts:post_detail', kwargs={'post_id': post.id}))
         self.assertTrue(Comment.objects.filter(

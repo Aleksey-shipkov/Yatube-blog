@@ -143,8 +143,6 @@ class FollowModelTest(TestCase):
 
     def test_follow_model_have_correct_object_names(self):
         """Проверяем, что у модели корректно работает __str__."""
-
-        # self.assertEqual(str(group), group.title)
         self.assertEqual(
             str(self.follow),
             f'{self.user.username} подписан на {self.post.author.username}'

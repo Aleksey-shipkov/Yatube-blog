@@ -71,7 +71,7 @@ class Comment(models.Model):
         verbose_name='Дата и время')
 
     def __str__(self) -> str:
-        return self.text
+        return self.text[:30]
 
 
 class Follow(models.Model):
@@ -83,9 +83,9 @@ class Follow(models.Model):
         null=True, verbose_name='Автор', help_text='Подписаться на автора')
 
     class Meta:
-        constraints = [
+        constraints = (
             models.UniqueConstraint(
-                fields=['user', 'author'], name='unique_following')]
+                fields=('user', 'author'), name='unique_following'))
 
     def __str__(self) -> str:
         return f'{self.user.username} подписан на {self.author.username}'
