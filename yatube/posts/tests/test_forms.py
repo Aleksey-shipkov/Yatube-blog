@@ -100,8 +100,7 @@ class PostsCreateTests(TestCase):
         response = self.authorized_client.post(
             reverse('posts:post_edit', kwargs={'post_id': post.id}),
             data=form_data,
-            follow=True,)
-        print(post.image)
+            follow=True)
         self.assertRedirects(response, reverse(
             'posts:post_detail', kwargs={'post_id': post.id}))
         self.assertEqual(Post.objects.count(), posts_count)
@@ -111,6 +110,22 @@ class PostsCreateTests(TestCase):
                 text='Измененные текста на пост пост текст',
                 image='posts/small2.gif',
             ).exists())
+
+
+class CommentTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = User.objects.create_user(username='Alex')
+        cls.group = Group.objects.create(
+            title='Тестовая группа 2',
+            slug='test-slug2',
+            description='Тестовое описание 2',
+        )
+
+    def setUp(self):
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.user)
 
     def test_add_comment_form_authorized(self):
         post = Post.objects.create(

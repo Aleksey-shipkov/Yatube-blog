@@ -1,4 +1,4 @@
-from http.client import NOT_FOUND, OK
+from http.client import NOT_FOUND, OK, FOUND
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import TestCase, Client
@@ -16,11 +16,12 @@ class StaticURLTests(TestCase):
         self.assertEqual(response.status_code, OK)
 
 
-class TaskURLTests(TestCase):
+class PostURLTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(username='auth')
+        cls.user2 = User.objects.create_user(username='auth2')
         cls.group = Group.objects.create(
             title='Тестовая группа',
             slug='test-slug',
@@ -35,7 +36,7 @@ class TaskURLTests(TestCase):
     def setUp(self):
         self.guest_client = Client()
         self.authorized_client = Client()
-        self.authorized_client.force_login(TaskURLTests.user)
+        self.authorized_client.force_login(PostURLTests.user)
         cache.clear()
 
     def test_urls_uses_correct_template_guest(self):
@@ -55,6 +56,7 @@ class TaskURLTests(TestCase):
             '/create/': 'posts/create_post.html',
             '/posts/3/edit/': 'posts/create_post.html',
             '/profile/auth/': 'posts/profile.html',
+            '/follow/': 'posts/follow.html',
         }
         for address, template in templates_url_names_authorized.items():
             with self.subTest(address=address):
@@ -77,11 +79,22 @@ class TaskURLTests(TestCase):
             '/create/',
             '/posts/3/edit/',
             '/profile/auth/',
+            '/follow/',
         ]
         for address in url_names_authorized:
             with self.subTest(address=address):
                 response = self.authorized_client.get(address)
                 self.assertEqual(response.status_code, OK)
+
+    def test_follow_urls_authorized_user(self):
+        url_names_authorized = [
+            '/profile/auth2/follow/',
+            '/profile/auth2/unfollow/',
+        ]
+        for address in url_names_authorized:
+            with self.subTest(address=address):
+                response = self.authorized_client.get(address)
+                self.assertEqual(response.status_code, FOUND)
 
     def test_urls_unexisting_page(self):
         response = self.guest_client.get('/unexisting_page/')
@@ -101,3 +114,22 @@ class TaskURLTests(TestCase):
         response = self.guest_client.get('/posts/3/comment/', follow=True)
         self.assertRedirects(
             response, ('/auth/login/?next=/posts/3/comment/'))
+
+    def test_follow_url_redirect_anonymous_on_user_login(self):
+        response = self.guest_client.get('/follow/', follow=True)
+        self.assertRedirects(
+            response, ('/auth/login/?next=/follow/'))
+
+    def test_follow_url_redirect_anonymous_on_user_login(self):
+        response = self.guest_client.get(
+            '/profile/auth2/follow/', follow=True
+        )
+        self.assertRedirects(
+            response, ('/auth/login/?next=/profile/auth2/follow/'))
+
+    def test_unfollow_url_redirect_anonymous_on_user_login(self):
+        response = self.guest_client.get(
+            '/profile/auth2/unfollow/', follow=True
+        )
+        self.assertRedirects(
+            response, ('/auth/login/?next=/profile/auth2/unfollow/'))

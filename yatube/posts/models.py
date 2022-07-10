@@ -77,7 +77,15 @@ class Comment(models.Model):
 class Follow(models.Model):
     user = models.ForeignKey(
         User, related_name='follower', on_delete=models.CASCADE, blank=True,
-        null=True)
+        null=True, verbose_name='Подписчик', help_text='Указать подписчика')
     author = models.ForeignKey(
         User, related_name='following', on_delete=models.CASCADE, blank=True,
-        null=True)
+        null=True, verbose_name='Автор', help_text='Подписаться на автора')
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'author'], name='unique_following')]
+
+    def __str__(self) -> str:
+        return f'{self.user.username} подписан на {self.author.username}'

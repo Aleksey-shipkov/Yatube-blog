@@ -180,9 +180,9 @@ class CacheTests(TestCase):
     def test_cache_index(self):
         """Тест кэширования страницы index.html"""
         first_state = self.authorized_client.get(reverse('posts:index'))
-        post_1 = Post.objects.get(pk=1)
-        post_1.text = 'Измененный текст поста'
-        post_1.save()
+        post = Post.objects.get(pk=1)
+        post.text = 'Измененный текст поста'
+        post.save()
         second_state = self.authorized_client.get(reverse('posts:index'))
         self.assertEqual(first_state.content, second_state.content)
         cache.clear()
@@ -210,15 +210,26 @@ class Followtests(TestCase):
 
     def test_follow_authorized_user(self):
         """Тестирование подписки на автора"""
-        Follow.objects.create(user=self.user, author=self.post.author)
+        self.authorized_client.get(reverse(
+            'posts:profile_follow', kwargs={'username': self.post.author}))
         author_following = Follow.objects.filter(
             user=self.user, author=self.post.author
         )
         self.assertTrue(author_following.exists())
 
+    def test_unfollow_authorized_user(self):
+        """Тестирование отписки от автора"""
+        self.authorized_client.get(reverse(
+            'posts:profile_unfollow', kwargs={'username': self.post.author}))
+        author_following = Follow.objects.filter(
+            user=self.user, author=self.post.author
+        )
+        self.assertFalse(author_following.exists())
+
     def test_followed_post_right_user(self):
         """Проверка попадания поста на страницу подписки на авторов."""
-        Follow.objects.create(user=self.user, author=self.post.author)
+        self.authorized_client.get(reverse(
+            'posts:profile_follow', kwargs={'username': self.post.author}))
         response = self.authorized_client.get(reverse(
             'posts:follow_index')
         )
@@ -227,7 +238,8 @@ class Followtests(TestCase):
 
     def test_followed_post_wrong_user(self):
         """Проверка попадания поста на страницу подписки на авторов."""
-        Follow.objects.create(user=self.user, author=self.post.author)
+        self.authorized_client.get(reverse(
+            'posts:profile_follow', kwargs={'username': self.post.author}))
         self.authorized_client.force_login(self.user3)
         response = self.authorized_client.get(reverse(
             'posts:follow_index')
